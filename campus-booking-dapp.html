@@ -1,0 +1,1594 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>CampusChain — Asset Booking DApp</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
+
+  :root {
+    --bg: #0a0e17;
+    --surface: #111827;
+    --surface2: #1a2235;
+    --surface3: #202d42;
+    --border: #2a3a52;
+    --border2: #3a4e6a;
+    --accent: #3b82f6;
+    --accent2: #6366f1;
+    --success: #10b981;
+    --warning: #f59e0b;
+    --danger: #ef4444;
+    --text: #f1f5f9;
+    --text2: #94a3b8;
+    --text3: #64748b;
+    --mono: 'JetBrains Mono', monospace;
+    --sans: 'Space Grotesk', sans-serif;
+    --radius: 10px;
+    --radius-lg: 14px;
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: var(--sans);
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* ── Grid background ── */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image:
+      linear-gradient(var(--border) 1px, transparent 1px),
+      linear-gradient(90deg, var(--border) 1px, transparent 1px);
+    background-size: 40px 40px;
+    opacity: 0.3;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  /* ── HEADER ── */
+  header {
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    background: rgba(10, 14, 23, 0.92);
+    backdrop-filter: blur(12px);
+    border-bottom: 1px solid var(--border);
+    padding: 0 2rem;
+    height: 60px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .logo {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 18px;
+    font-weight: 700;
+    letter-spacing: -0.5px;
+  }
+
+  .logo-icon {
+    width: 32px; height: 32px;
+    background: linear-gradient(135deg, var(--accent), var(--accent2));
+    border-radius: 8px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 16px;
+  }
+
+  .header-right { display: flex; align-items: center; gap: 12px; }
+
+  .wallet-badge {
+    display: flex; align-items: center; gap: 8px;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 6px 12px;
+    font-size: 13px;
+    font-family: var(--mono);
+  }
+
+  .wallet-dot {
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    background: var(--success);
+    flex-shrink: 0;
+  }
+  .wallet-dot.disconnected { background: var(--text3); }
+
+  .role-badge {
+    padding: 3px 8px;
+    border-radius: 5px;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+  }
+  .role-admin { background: rgba(99,102,241,0.2); color: #a5b4fc; border: 1px solid rgba(99,102,241,0.4); }
+  .role-user  { background: rgba(16,185,129,0.2); color: #6ee7b7; border: 1px solid rgba(16,185,129,0.3); }
+  .role-none  { background: rgba(239,68,68,0.15); color: #fca5a5; border: 1px solid rgba(239,68,68,0.3); }
+
+  .btn-connect {
+    background: linear-gradient(135deg, var(--accent), var(--accent2));
+    border: none; border-radius: 8px;
+    padding: 8px 16px; color: #fff;
+    font-family: var(--sans); font-size: 13px; font-weight: 600;
+    cursor: pointer; transition: opacity 0.2s;
+  }
+  .btn-connect:hover { opacity: 0.85; }
+
+  /* ── MAIN LAYOUT ── */
+  .container {
+    position: relative; z-index: 1;
+    max-width: 1280px; margin: 0 auto;
+    padding: 2rem;
+  }
+
+  /* ── TABS ── */
+  .tabs {
+    display: flex; gap: 4px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 4px;
+    margin-bottom: 2rem;
+    overflow-x: auto;
+  }
+
+  .tab {
+    flex-shrink: 0;
+    padding: 8px 16px;
+    border: none; background: transparent;
+    color: var(--text2); font-family: var(--sans);
+    font-size: 13px; font-weight: 500;
+    border-radius: 7px; cursor: pointer;
+    transition: all 0.15s;
+    white-space: nowrap;
+  }
+  .tab.active {
+    background: var(--surface3);
+    color: var(--text);
+    box-shadow: 0 0 0 1px var(--border2);
+  }
+  .tab:hover:not(.active) { color: var(--text); }
+
+  .tab-panel { display: none; }
+  .tab-panel.active { display: block; }
+
+  /* ── SECTION HEADERS ── */
+  .section-head {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-bottom: 1.25rem;
+  }
+  .section-title {
+    font-size: 20px; font-weight: 600;
+    letter-spacing: -0.3px;
+  }
+  .section-sub { font-size: 13px; color: var(--text3); margin-top: 2px; }
+
+  /* ── CARDS ── */
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: 1.25rem;
+  }
+
+  .asset-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 16px;
+  }
+
+  .asset-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: 1.25rem;
+    cursor: pointer;
+    transition: border-color 0.15s, transform 0.15s;
+    position: relative;
+    overflow: hidden;
+  }
+  .asset-card::before {
+    content: '';
+    position: absolute; top: 0; left: 0; right: 0;
+    height: 3px;
+    background: linear-gradient(90deg, var(--accent), var(--accent2));
+    opacity: 0;
+    transition: opacity 0.15s;
+  }
+  .asset-card:hover { border-color: var(--border2); transform: translateY(-2px); }
+  .asset-card:hover::before { opacity: 1; }
+  .asset-card.selected { border-color: var(--accent); }
+  .asset-card.selected::before { opacity: 1; }
+
+  .asset-category {
+    font-size: 11px; font-weight: 600; letter-spacing: 0.8px;
+    text-transform: uppercase; color: var(--accent);
+    margin-bottom: 8px;
+  }
+  .asset-name { font-size: 16px; font-weight: 600; margin-bottom: 4px; }
+  .asset-desc { font-size: 13px; color: var(--text2); margin-bottom: 12px; line-height: 1.5; }
+  .asset-fee {
+    font-family: var(--mono); font-size: 14px; font-weight: 500;
+    color: var(--success);
+  }
+
+  .slots-bar { margin-top: 12px; }
+  .slots-label { font-size: 11px; color: var(--text3); margin-bottom: 6px; }
+  .slot-row {
+    display: flex; gap: 4px; flex-wrap: wrap;
+  }
+  .slot-chip {
+    font-size: 10px; font-family: var(--mono);
+    padding: 2px 6px; border-radius: 4px;
+    border: 1px solid;
+  }
+  .slot-chip.booked { background: rgba(239,68,68,0.1); color: #fca5a5; border-color: rgba(239,68,68,0.3); }
+  .slot-chip.free   { background: rgba(16,185,129,0.1); color: #6ee7b7; border-color: rgba(16,185,129,0.3); }
+
+  /* ── FORMS ── */
+  .form-grid { display: grid; gap: 14px; }
+  .form-grid-2 { grid-template-columns: 1fr 1fr; }
+
+  .field { display: flex; flex-direction: column; gap: 6px; }
+  .field label {
+    font-size: 12px; font-weight: 500; color: var(--text2);
+    letter-spacing: 0.3px;
+  }
+  .field input, .field select, .field textarea {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 9px 12px;
+    color: var(--text);
+    font-family: var(--sans); font-size: 14px;
+    outline: none; transition: border-color 0.15s;
+    width: 100%;
+  }
+  .field input:focus, .field select:focus, .field textarea:focus {
+    border-color: var(--accent);
+  }
+  .field textarea { resize: vertical; min-height: 80px; }
+  .field select option { background: var(--surface2); }
+
+  /* ── BUTTONS ── */
+  .btn {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 9px 16px; border-radius: 8px;
+    font-family: var(--sans); font-size: 13px; font-weight: 600;
+    border: none; cursor: pointer; transition: all 0.15s;
+    white-space: nowrap;
+  }
+  .btn-primary {
+    background: linear-gradient(135deg, var(--accent), var(--accent2));
+    color: #fff;
+  }
+  .btn-primary:hover { opacity: 0.85; }
+  .btn-success { background: rgba(16,185,129,0.15); color: var(--success); border: 1px solid rgba(16,185,129,0.3); }
+  .btn-success:hover { background: rgba(16,185,129,0.25); }
+  .btn-danger { background: rgba(239,68,68,0.12); color: #fca5a5; border: 1px solid rgba(239,68,68,0.3); }
+  .btn-danger:hover { background: rgba(239,68,68,0.2); }
+  .btn-ghost { background: var(--surface2); color: var(--text2); border: 1px solid var(--border); }
+  .btn-ghost:hover { color: var(--text); border-color: var(--border2); }
+  .btn:disabled { opacity: 0.4; cursor: not-allowed; }
+  .btn-sm { padding: 6px 10px; font-size: 12px; }
+
+  /* ── TABLES ── */
+  .table-wrap { overflow-x: auto; }
+  table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  thead th {
+    text-align: left; padding: 10px 12px;
+    background: var(--surface2);
+    color: var(--text2); font-weight: 500; font-size: 11px;
+    letter-spacing: 0.5px; text-transform: uppercase;
+    border-bottom: 1px solid var(--border);
+  }
+  tbody td {
+    padding: 11px 12px;
+    border-bottom: 1px solid var(--border);
+    color: var(--text);
+    vertical-align: middle;
+  }
+  tbody tr:last-child td { border-bottom: none; }
+  tbody tr:hover td { background: var(--surface2); }
+
+  /* ── STATUS BADGES ── */
+  .badge {
+    display: inline-flex; align-items: center; gap: 4px;
+    padding: 3px 8px; border-radius: 5px;
+    font-size: 11px; font-weight: 600; letter-spacing: 0.3px;
+  }
+  .badge-active  { background: rgba(16,185,129,0.12); color: #6ee7b7; border: 1px solid rgba(16,185,129,0.3); }
+  .badge-admin   { background: rgba(239,68,68,0.12); color: #fca5a5; border: 1px solid rgba(239,68,68,0.3); }
+  .badge-user    { background: rgba(99,102,241,0.12); color: #a5b4fc; border: 1px solid rgba(99,102,241,0.3); }
+  .badge-warning { background: rgba(245,158,11,0.12); color: #fcd34d; border: 1px solid rgba(245,158,11,0.3); }
+
+  /* ── TOAST ── */
+  #toast-container {
+    position: fixed; top: 72px; right: 20px; z-index: 9999;
+    display: flex; flex-direction: column; gap: 8px;
+  }
+  .toast {
+    min-width: 280px; max-width: 380px;
+    background: var(--surface2);
+    border: 1px solid var(--border2);
+    border-radius: var(--radius);
+    padding: 12px 16px;
+    font-size: 13px;
+    display: flex; align-items: flex-start; gap: 10px;
+    animation: slideIn 0.3s ease;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.4);
+  }
+  .toast.success { border-color: rgba(16,185,129,0.4); }
+  .toast.error   { border-color: rgba(239,68,68,0.4); }
+  .toast.info    { border-color: rgba(59,130,246,0.4); }
+  .toast-icon { font-size: 16px; flex-shrink: 0; margin-top: 1px; }
+  .toast-body { flex: 1; }
+  .toast-title { font-weight: 600; margin-bottom: 2px; }
+  .toast-msg   { color: var(--text2); font-size: 12px; }
+  @keyframes slideIn { from { opacity: 0; transform: translateX(20px); } to { opacity: 1; transform: none; } }
+
+  /* ── MODAL ── */
+  .modal-overlay {
+    display: none;
+    position: fixed; inset: 0; z-index: 500;
+    background: rgba(0,0,0,0.7);
+    align-items: center; justify-content: center;
+    padding: 1rem;
+  }
+  .modal-overlay.open { display: flex; }
+  .modal {
+    background: var(--surface);
+    border: 1px solid var(--border2);
+    border-radius: var(--radius-lg);
+    width: 100%; max-width: 520px;
+    max-height: 90vh; overflow-y: auto;
+    padding: 1.5rem;
+  }
+  .modal-header {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-bottom: 1.25rem;
+  }
+  .modal-title { font-size: 18px; font-weight: 600; }
+  .modal-close {
+    width: 28px; height: 28px; border-radius: 6px;
+    background: var(--surface2); border: 1px solid var(--border);
+    color: var(--text2); font-size: 16px;
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer;
+  }
+
+  /* ── FEE CALCULATOR ── */
+  .fee-calc {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 12px 14px;
+    font-family: var(--mono); font-size: 13px;
+  }
+  .fee-row { display: flex; justify-content: space-between; margin-bottom: 4px; color: var(--text2); }
+  .fee-total { display: flex; justify-content: space-between; padding-top: 8px; border-top: 1px solid var(--border); font-weight: 600; color: var(--success); }
+
+  /* ── DEMO PANEL ── */
+  .demo-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 12px; margin-bottom: 1.5rem; }
+  .demo-card {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 12px;
+  }
+  .demo-card-role { font-size: 10px; font-weight: 600; letter-spacing: 0.8px; text-transform: uppercase; margin-bottom: 6px; }
+  .demo-card-addr { font-family: var(--mono); font-size: 11px; color: var(--text2); word-break: break-all; }
+  .demo-card-bal  { font-size: 13px; font-weight: 500; margin-top: 6px; color: var(--success); }
+
+  .refund-tiers {
+    display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin: 1rem 0;
+  }
+  .tier-card {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 12px;
+    text-align: center;
+  }
+  .tier-pct { font-size: 28px; font-weight: 700; color: var(--success); margin-bottom: 4px; }
+  .tier-label { font-size: 12px; color: var(--text2); }
+
+  /* ── INFO BOX ── */
+  .info-box {
+    background: rgba(59,130,246,0.08);
+    border: 1px solid rgba(59,130,246,0.25);
+    border-radius: var(--radius);
+    padding: 12px 14px;
+    font-size: 13px; color: var(--text2);
+    margin-bottom: 1rem;
+    display: flex; gap: 10px; align-items: flex-start;
+  }
+  .warn-box {
+    background: rgba(245,158,11,0.08);
+    border: 1px solid rgba(245,158,11,0.25);
+    border-radius: var(--radius);
+    padding: 12px 14px;
+    font-size: 13px; color: #fcd34d;
+    margin-bottom: 1rem;
+    display: flex; gap: 10px; align-items: flex-start;
+  }
+
+  /* ── STEP GUIDE ── */
+  .steps { display: flex; flex-direction: column; gap: 0; }
+  .step {
+    display: flex; gap: 16px;
+    padding: 1rem 0;
+    border-bottom: 1px solid var(--border);
+  }
+  .step:last-child { border-bottom: none; }
+  .step-num {
+    width: 28px; height: 28px; flex-shrink: 0;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--accent), var(--accent2));
+    display: flex; align-items: center; justify-content: center;
+    font-size: 12px; font-weight: 700;
+  }
+  .step-body {}
+  .step-title { font-size: 14px; font-weight: 600; margin-bottom: 4px; }
+  .step-desc  { font-size: 13px; color: var(--text2); line-height: 1.6; }
+  code {
+    font-family: var(--mono); font-size: 12px;
+    background: var(--surface2); border: 1px solid var(--border);
+    border-radius: 4px; padding: 1px 5px;
+    color: var(--accent);
+  }
+
+  /* ── TIMELINE ── */
+  .history-item {
+    display: flex; gap: 12px;
+    padding: 12px 0;
+    border-bottom: 1px solid var(--border);
+  }
+  .history-item:last-child { border-bottom: none; }
+  .history-dot {
+    width: 10px; height: 10px; border-radius: 50%;
+    flex-shrink: 0; margin-top: 4px;
+  }
+
+  /* ── SCROLLBAR ── */
+  ::-webkit-scrollbar { width: 6px; height: 6px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 3px; }
+
+  @media (max-width: 640px) {
+    .container { padding: 1rem; }
+    .form-grid-2 { grid-template-columns: 1fr; }
+    header { padding: 0 1rem; }
+    .section-head { flex-direction: column; align-items: flex-start; gap: 8px; }
+  }
+</style>
+</head>
+<body>
+
+<div id="toast-container"></div>
+
+<!-- HEADER -->
+<header>
+  <div class="logo">
+    <div class="logo-icon">🏛</div>
+    <span>CampusChain</span>
+  </div>
+  <div class="header-right">
+    <div class="wallet-badge" id="wallet-badge">
+      <div class="wallet-dot disconnected" id="wallet-dot"></div>
+      <span id="wallet-label">Not connected</span>
+    </div>
+    <span class="role-badge role-none" id="role-badge">Guest</span>
+    <button class="btn-connect" id="connect-btn" onclick="connectWallet()">Connect MetaMask</button>
+  </div>
+</header>
+
+<!-- MAIN -->
+<div class="container">
+
+  <!-- TABS -->
+  <nav class="tabs">
+    <button class="tab active" onclick="switchTab('catalogue')">Asset Catalogue</button>
+    <button class="tab" onclick="switchTab('book')">Book a Slot</button>
+    <button class="tab" onclick="switchTab('mybookings')">My Bookings</button>
+    <button class="tab" onclick="switchTab('admin')">Admin Panel</button>
+    <button class="tab" onclick="switchTab('history')">On-Chain History</button>
+    <button class="tab" onclick="switchTab('setup')">Setup Guide</button>
+  </nav>
+
+  <!-- ═══════════════════════════════════════════════════════ -->
+  <!-- TAB: CATALOGUE                                         -->
+  <!-- ═══════════════════════════════════════════════════════ -->
+  <div class="tab-panel active" id="tab-catalogue">
+    <div class="section-head">
+      <div>
+        <div class="section-title">Campus Assets</div>
+        <div class="section-sub">Browse all registered resources and their availability</div>
+      </div>
+      <button class="btn btn-ghost btn-sm" onclick="loadAssets()">↻ Refresh</button>
+    </div>
+
+    <div class="info-box" id="no-wallet-warn">
+      ℹ️ <span>Connect MetaMask to interact with the blockchain. Displaying demo data below.</span>
+    </div>
+
+    <div class="asset-grid" id="asset-grid">
+      <!-- populated by JS -->
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════════════ -->
+  <!-- TAB: BOOK A SLOT                                       -->
+  <!-- ═══════════════════════════════════════════════════════ -->
+  <div class="tab-panel" id="tab-book">
+    <div class="section-head">
+      <div>
+        <div class="section-title">Book a Slot</div>
+        <div class="section-sub">Select an asset, choose your time window, and pay via MetaMask</div>
+      </div>
+    </div>
+
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;">
+      <div>
+        <div class="card">
+          <div style="font-size:14px;font-weight:600;margin-bottom:14px;color:var(--text2)">1. Select Asset</div>
+          <div class="field">
+            <label>Asset</label>
+            <select id="book-asset-select" onchange="onAssetSelect()">
+              <option value="">— choose an asset —</option>
+            </select>
+          </div>
+
+          <div id="selected-asset-info" style="display:none;margin-top:14px;">
+            <div style="background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius);padding:12px;">
+              <div id="book-asset-name" style="font-weight:600;margin-bottom:4px;"></div>
+              <div id="book-asset-desc" style="font-size:12px;color:var(--text2);margin-bottom:8px;"></div>
+              <div id="book-asset-fee" style="font-family:var(--mono);font-size:13px;color:var(--success);"></div>
+            </div>
+          </div>
+
+          <div style="font-size:14px;font-weight:600;margin:18px 0 14px;color:var(--text2)">2. Choose Time Slot</div>
+          <div class="form-grid">
+            <div class="field">
+              <label>Start Date & Time</label>
+              <input type="datetime-local" id="book-start" onchange="calcFee()"/>
+            </div>
+            <div class="field">
+              <label>End Date & Time</label>
+              <input type="datetime-local" id="book-end" onchange="calcFee()"/>
+            </div>
+          </div>
+
+          <div id="fee-calc-box" style="display:none;margin-top:14px;">
+            <div class="fee-calc">
+              <div class="fee-row"><span>Duration</span><span id="calc-hrs">—</span></div>
+              <div class="fee-row"><span>Rate</span><span id="calc-rate">—</span></div>
+              <div class="fee-total"><span>Total Due</span><span id="calc-total">—</span></div>
+            </div>
+          </div>
+
+          <div id="conflict-warn" style="display:none;margin-top:10px;" class="warn-box">
+            ⚠️ This slot conflicts with an existing booking. Please choose a different time.
+          </div>
+
+          <button class="btn btn-primary" style="width:100%;margin-top:16px;justify-content:center;" onclick="bookAsset()" id="book-btn">
+            🔗 Book & Pay via MetaMask
+          </button>
+        </div>
+      </div>
+
+      <div>
+        <div class="card" style="height:100%;">
+          <div style="font-size:14px;font-weight:600;margin-bottom:14px;color:var(--text2)">Booked Slots for Selected Asset</div>
+          <div id="asset-timeline">
+            <div style="color:var(--text3);font-size:13px;">Select an asset to see its bookings.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════════════ -->
+  <!-- TAB: MY BOOKINGS                                       -->
+  <!-- ═══════════════════════════════════════════════════════ -->
+  <div class="tab-panel" id="tab-mybookings">
+    <div class="section-head">
+      <div>
+        <div class="section-title">My Bookings</div>
+        <div class="section-sub">Manage your reservations and cancellations</div>
+      </div>
+      <button class="btn btn-ghost btn-sm" onclick="loadMyBookings()">↻ Refresh</button>
+    </div>
+
+    <div class="refund-tiers">
+      <div class="tier-card">
+        <div class="tier-pct">100%</div>
+        <div class="tier-label">Refund if cancelled<br>&gt; 24 hrs before slot</div>
+      </div>
+      <div class="tier-card">
+        <div class="tier-pct" style="color:var(--warning)">50%</div>
+        <div class="tier-label">Refund if cancelled<br>≤ 24 hrs before slot</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>#</th><th>Asset</th><th>Start</th><th>End</th>
+              <th>Paid (ETH)</th><th>Status</th><th>Refund</th><th>Action</th>
+            </tr>
+          </thead>
+          <tbody id="my-bookings-body">
+            <tr><td colspan="8" style="text-align:center;color:var(--text3);padding:2rem;">Connect wallet to view your bookings.</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════════════ -->
+  <!-- TAB: ADMIN                                             -->
+  <!-- ═══════════════════════════════════════════════════════ -->
+  <div class="tab-panel" id="tab-admin">
+    <div class="section-head">
+      <div>
+        <div class="section-title">Admin Panel</div>
+        <div class="section-sub">Manage assets, users, and bookings</div>
+      </div>
+    </div>
+
+    <div id="admin-gate" class="warn-box" style="display:none;">
+      ⚠️ <span>Admin functions are restricted to the contract owner wallet.</span>
+    </div>
+
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;">
+      <!-- Register Asset -->
+      <div class="card">
+        <div style="font-size:15px;font-weight:600;margin-bottom:1rem;">Register New Asset</div>
+        <div class="form-grid">
+          <div class="field"><label>Asset Name</label><input type="text" id="a-name" placeholder="e.g. Seminar Hall A"/></div>
+          <div class="field"><label>Category</label>
+            <select id="a-category">
+              <option>Lab</option><option>Hall</option><option>Equipment</option>
+              <option>Court</option><option>Studio</option><option>Other</option>
+            </select>
+          </div>
+          <div class="field"><label>Description</label><textarea id="a-desc" placeholder="Details about this asset…"></textarea></div>
+          <div class="field"><label>Hourly Fee (ETH)</label><input type="number" id="a-fee" step="0.001" min="0.001" placeholder="e.g. 0.01"/></div>
+        </div>
+        <button class="btn btn-primary" style="margin-top:12px;" onclick="adminRegisterAsset()">+ Register Asset</button>
+      </div>
+
+      <!-- Register User -->
+      <div class="card">
+        <div style="font-size:15px;font-weight:600;margin-bottom:1rem;">Register User Wallet</div>
+        <div class="field"><label>Wallet Address</label><input type="text" id="u-addr" placeholder="0x…"/></div>
+        <button class="btn btn-success" style="margin-top:12px;" onclick="adminRegisterUser()">✓ Register Wallet</button>
+
+        <div style="font-size:15px;font-weight:600;margin:1.5rem 0 1rem;">Remove User Wallet</div>
+        <div class="field"><label>Wallet Address</label><input type="text" id="u-remove" placeholder="0x…"/></div>
+        <button class="btn btn-danger" style="margin-top:12px;" onclick="adminRemoveUser()">✕ Remove Wallet</button>
+
+        <div style="font-size:15px;font-weight:600;margin:1.5rem 0 1rem;">Registered Users</div>
+        <div id="registered-users-list" style="font-size:12px;font-family:var(--mono);color:var(--text2);line-height:2;">
+          <em>Load from chain…</em>
+        </div>
+        <button class="btn btn-ghost btn-sm" style="margin-top:8px;" onclick="loadRegisteredUsers()">↻ Load</button>
+      </div>
+    </div>
+
+    <!-- Admin Booking Management -->
+    <div class="card" style="margin-top:20px;">
+      <div style="font-size:15px;font-weight:600;margin-bottom:1rem;">All Active Bookings (Admin View)</div>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>#</th><th>Asset</th><th>Booked By</th><th>Start</th><th>End</th><th>Paid (ETH)</th><th>Status</th><th>Action</th></tr>
+          </thead>
+          <tbody id="admin-bookings-body">
+            <tr><td colspan="8" style="text-align:center;color:var(--text3);padding:2rem;">Load bookings to manage.</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <button class="btn btn-ghost btn-sm" style="margin-top:12px;" onclick="loadAllBookingsAdmin()">↻ Load All Bookings</button>
+
+      <div style="margin-top:1.5rem;padding-top:1.5rem;border-top:1px solid var(--border);">
+        <div style="font-size:15px;font-weight:600;margin-bottom:1rem;">Cancel Specific Booking (100% Refund)</div>
+        <div style="display:flex;gap:10px;">
+          <div class="field" style="flex:1"><label>Booking ID</label><input type="number" id="admin-cancel-id" placeholder="e.g. 3" min="1"/></div>
+          <div style="align-self:flex-end;">
+            <button class="btn btn-danger" onclick="adminCancelBooking()">Cancel & Refund</button>
+          </div>
+        </div>
+      </div>
+
+      <div style="margin-top:1.5rem;padding-top:1.5rem;border-top:1px solid var(--border);">
+        <div style="font-size:15px;font-weight:600;margin-bottom:8px;">Penalty Balance in Contract</div>
+        <div style="font-family:var(--mono);color:var(--warning);font-size:16px;" id="contract-balance">—</div>
+        <div style="display:flex;gap:10px;margin-top:10px;">
+          <button class="btn btn-ghost btn-sm" onclick="loadContractBalance()">↻ Check Balance</button>
+          <button class="btn btn-warning btn-sm" style="background:rgba(245,158,11,0.15);color:#fcd34d;border:1px solid rgba(245,158,11,0.3);" onclick="adminWithdraw()">Withdraw Penalties</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════════════ -->
+  <!-- TAB: ON-CHAIN HISTORY                                  -->
+  <!-- ═══════════════════════════════════════════════════════ -->
+  <div class="tab-panel" id="tab-history">
+    <div class="section-head">
+      <div>
+        <div class="section-title">On-Chain History</div>
+        <div class="section-sub">Immutable, publicly readable record of all bookings and cancellations</div>
+      </div>
+      <button class="btn btn-ghost btn-sm" onclick="loadAllHistory()">↻ Load All</button>
+    </div>
+
+    <div class="card">
+      <div id="history-list">
+        <div style="color:var(--text3);font-size:13px;text-align:center;padding:2rem;">Click "Load All" to fetch the full on-chain history.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════════════ -->
+  <!-- TAB: SETUP GUIDE                                       -->
+  <!-- ═══════════════════════════════════════════════════════ -->
+  <div class="tab-panel" id="tab-setup">
+    <div class="section-head">
+      <div>
+        <div class="section-title">Setup Guide</div>
+        <div class="section-sub">Deploy and test on Ganache in 10 minutes</div>
+      </div>
+    </div>
+
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-bottom:20px;">
+      <div class="card">
+        <div style="font-size:15px;font-weight:600;margin-bottom:1rem;">Demo Wallet Setup (4 accounts)</div>
+        <div id="demo-wallets" class="demo-grid">
+          <!-- rendered by JS -->
+        </div>
+        <div class="info-box" style="margin-top:0;">
+          ℹ️ In Ganache, each account starts with 100 ETH. Import these addresses into MetaMask using their private keys.
+        </div>
+      </div>
+      <div class="card">
+        <div style="font-size:15px;font-weight:600;margin-bottom:1rem;">Contract Configuration</div>
+        <div class="field" style="margin-bottom:12px;">
+          <label>Deployed Contract Address</label>
+          <input type="text" id="contract-addr-input" placeholder="0x… (paste after deploying)" onchange="setContractAddress()"/>
+        </div>
+        <div style="font-size:13px;color:var(--text2);line-height:1.7;">
+          After deploying <code>CampusAssetBooking.sol</code> on Ganache:<br>
+          1. Copy the contract address<br>
+          2. Paste it above<br>
+          3. Connect MetaMask (network: <code>localhost:8545</code>, chainId <code>1337</code>)<br>
+          4. Switch accounts to test different roles
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div style="font-size:15px;font-weight:600;margin-bottom:1rem;">Step-by-Step Deployment</div>
+      <div class="steps">
+        <div class="step">
+          <div class="step-num">1</div>
+          <div class="step-body">
+            <div class="step-title">Install prerequisites</div>
+            <div class="step-desc">Install <code>Ganache</code> (desktop or CLI: <code>npm i -g ganache</code>), <code>Truffle</code> (<code>npm i -g truffle</code>), and the MetaMask browser extension.</div>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-num">2</div>
+          <div class="step-body">
+            <div class="step-title">Start Ganache</div>
+            <div class="step-desc">Run <code>ganache --server.port 8545 --chain.chainId 1337 --chain.networkId 1337 --wallet.deterministic</code>. This gives you 10 deterministic accounts with 100 ETH each. Note the first 4 addresses.</div>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-num">3</div>
+          <div class="step-body">
+            <div class="step-title">Deploy the contract</div>
+            <div class="step-desc">
+              Create a Truffle project, place <code>CampusAssetBooking.sol</code> in <code>contracts/</code>, write a migration, then run:
+              <br><code>truffle migrate --network development</code><br>
+              Copy the deployed contract address.
+            </div>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-num">4</div>
+          <div class="step-body">
+            <div class="step-title">Configure MetaMask</div>
+            <div class="step-desc">Add network: RPC <code>http://127.0.0.1:8545</code>, Chain ID <code>1337</code>. Import the 4 Ganache accounts using their private keys (shown in Ganache UI).</div>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-num">5</div>
+          <div class="step-body">
+            <div class="step-title">Admin setup (Account 0)</div>
+            <div class="step-desc">Connect with Account 0 (admin). Go to Admin Panel → register Assets → register Accounts 1 and 2 as users. Account 3 remains unregistered to demonstrate rejection.</div>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-num">6</div>
+          <div class="step-body">
+            <div class="step-title">Test all scenarios</div>
+            <div class="step-desc">
+              Switch to Account 1 → book a slot (pays ETH) → verify on-chain.<br>
+              Switch to Account 2 → try same slot → expect rejection.<br>
+              Switch to Account 3 → try any booking → expect "not registered" revert.<br>
+              Test cancellation with both refund tiers.
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card" style="margin-top:20px;">
+      <div style="font-size:15px;font-weight:600;margin-bottom:1rem;">ABI — Paste into this frontend</div>
+      <div style="font-size:12px;color:var(--text2);margin-bottom:8px;">After compiling, open <code>build/contracts/CampusAssetBooking.json</code> and copy the <code>abi</code> array.</div>
+      <textarea id="abi-input" rows="6" style="width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:10px;font-family:var(--mono);font-size:11px;color:var(--text2);resize:vertical;" placeholder='[{"inputs":[],"stateMutability":"nonpayable","type":"constructor"}, ...]' oninput="setABI()"></textarea>
+      <button class="btn btn-primary" style="margin-top:10px;" onclick="setABI()">Load ABI</button>
+    </div>
+  </div>
+
+</div><!-- /container -->
+
+<!-- BOOKING DETAIL MODAL -->
+<div class="modal-overlay" id="booking-modal">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title">Booking Details</div>
+      <div class="modal-close" onclick="closeModal('booking-modal')">✕</div>
+    </div>
+    <div id="modal-content"></div>
+  </div>
+</div>
+
+<script>
+// ══════════════════════════════════════════════════════════════
+//  STATE
+// ══════════════════════════════════════════════════════════════
+let web3 = null;
+let contract = null;
+let currentAccount = null;
+let isAdmin = false;
+let isRegistered = false;
+let CONTRACT_ADDRESS = '';
+
+// Full ABI (will be replaced when user pastes real ABI)
+let CONTRACT_ABI = [
+  {"inputs":[],"stateMutability":"nonpayable","type":"constructor"},
+  {"inputs":[{"internalType":"address","name":"user","type":"address"}],"name":"registerUser","outputs":[],"stateMutability":"nonpayable","type":"function"},
+  {"inputs":[{"internalType":"address[]","name":"users","type":"address[]"}],"name":"registerUsers","outputs":[],"stateMutability":"nonpayable","type":"function"},
+  {"inputs":[{"internalType":"address","name":"user","type":"address"}],"name":"removeUser","outputs":[],"stateMutability":"nonpayable","type":"function"},
+  {"inputs":[{"internalType":"string","name":"name","type":"string"},{"internalType":"string","name":"description","type":"string"},{"internalType":"string","name":"category","type":"string"},{"internalType":"uint256","name":"hourlyFeeWei","type":"uint256"}],"name":"registerAsset","outputs":[{"internalType":"uint256","name":"assetId","type":"uint256"}],"stateMutability":"nonpayable","type":"function"},
+  {"inputs":[{"internalType":"uint256","name":"assetId","type":"uint256"},{"internalType":"string","name":"name","type":"string"},{"internalType":"string","name":"description","type":"string"},{"internalType":"string","name":"category","type":"string"},{"internalType":"uint256","name":"hourlyFeeWei","type":"uint256"}],"name":"updateAsset","outputs":[],"stateMutability":"nonpayable","type":"function"},
+  {"inputs":[{"internalType":"uint256","name":"assetId","type":"uint256"}],"name":"deactivateAsset","outputs":[],"stateMutability":"nonpayable","type":"function"},
+  {"inputs":[{"internalType":"uint256","name":"assetId","type":"uint256"},{"internalType":"uint256","name":"startTime","type":"uint256"},{"internalType":"uint256","name":"endTime","type":"uint256"}],"name":"bookAsset","outputs":[{"internalType":"uint256","name":"bookingId","type":"uint256"}],"stateMutability":"payable","type":"function"},
+  {"inputs":[{"internalType":"uint256","name":"bookingId","type":"uint256"}],"name":"adminCancelBooking","outputs":[],"stateMutability":"nonpayable","type":"function"},
+  {"inputs":[{"internalType":"uint256","name":"bookingId","type":"uint256"}],"name":"userCancelBooking","outputs":[],"stateMutability":"nonpayable","type":"function"},
+  {"inputs":[{"internalType":"uint256","name":"assetId","type":"uint256"}],"name":"getAsset","outputs":[{"components":[{"internalType":"uint256","name":"id","type":"uint256"},{"internalType":"string","name":"name","type":"string"},{"internalType":"string","name":"description","type":"string"},{"internalType":"string","name":"category","type":"string"},{"internalType":"uint256","name":"hourlyFeeWei","type":"uint256"},{"internalType":"bool","name":"active","type":"bool"},{"internalType":"address","name":"registeredBy","type":"address"},{"internalType":"uint256","name":"createdAt","type":"uint256"}],"internalType":"struct CampusAssetBooking.Asset","name":"","type":"tuple"}],"stateMutability":"view","type":"function"},
+  {"inputs":[],"name":"getAllAssetIds","outputs":[{"internalType":"uint256[]","name":"","type":"uint256[]"}],"stateMutability":"view","type":"function"},
+  {"inputs":[{"internalType":"uint256","name":"bookingId","type":"uint256"}],"name":"getBooking","outputs":[{"components":[{"internalType":"uint256","name":"id","type":"uint256"},{"internalType":"uint256","name":"assetId","type":"uint256"},{"internalType":"address","name":"bookedBy","type":"address"},{"internalType":"uint256","name":"startTime","type":"uint256"},{"internalType":"uint256","name":"endTime","type":"uint256"},{"internalType":"uint256","name":"amountPaid","type":"uint256"},{"internalType":"uint8","name":"status","type":"uint8"},{"internalType":"uint256","name":"createdAt","type":"uint256"},{"internalType":"uint256","name":"cancelledAt","type":"uint256"},{"internalType":"uint256","name":"refundAmount","type":"uint256"}],"internalType":"struct CampusAssetBooking.Booking","name":"","type":"tuple"}],"stateMutability":"view","type":"function"},
+  {"inputs":[],"name":"getAllBookingIds","outputs":[{"internalType":"uint256[]","name":"","type":"uint256[]"}],"stateMutability":"view","type":"function"},
+  {"inputs":[{"internalType":"uint256","name":"assetId","type":"uint256"}],"name":"getAssetBookings","outputs":[{"internalType":"uint256[]","name":"","type":"uint256[]"}],"stateMutability":"view","type":"function"},
+  {"inputs":[{"internalType":"address","name":"user","type":"address"}],"name":"getUserBookings","outputs":[{"internalType":"uint256[]","name":"","type":"uint256[]"}],"stateMutability":"view","type":"function"},
+  {"inputs":[],"name":"getRegisteredUsers","outputs":[{"internalType":"address[]","name":"","type":"address[]"}],"stateMutability":"view","type":"function"},
+  {"inputs":[{"internalType":"uint256","name":"assetId","type":"uint256"},{"internalType":"uint256","name":"startTime","type":"uint256"},{"internalType":"uint256","name":"endTime","type":"uint256"}],"name":"computeFee","outputs":[{"internalType":"uint256","name":"fee","type":"uint256"}],"stateMutability":"view","type":"function"},
+  {"inputs":[{"internalType":"uint256","name":"assetId","type":"uint256"},{"internalType":"uint256","name":"startTime","type":"uint256"},{"internalType":"uint256","name":"endTime","type":"uint256"}],"name":"isSlotAvailable","outputs":[{"internalType":"bool","name":"","type":"bool"}],"stateMutability":"view","type":"function"},
+  {"inputs":[],"name":"contractBalance","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},
+  {"inputs":[],"name":"withdrawPenalties","outputs":[],"stateMutability":"nonpayable","type":"function"},
+  {"inputs":[],"name":"admin","outputs":[{"internalType":"address","name":"","type":"address"}],"stateMutability":"view","type":"function"},
+  {"inputs":[{"internalType":"address","name":"","type":"address"}],"name":"registeredUsers","outputs":[{"internalType":"bool","name":"","type":"bool"}],"stateMutability":"view","type":"function"},
+  {"anonymous":false,"inputs":[{"indexed":true,"internalType":"address","name":"user","type":"address"},{"indexed":false,"internalType":"uint256","name":"timestamp","type":"uint256"}],"name":"UserRegistered","type":"event"},
+  {"anonymous":false,"inputs":[{"indexed":true,"internalType":"address","name":"user","type":"address"},{"indexed":false,"internalType":"uint256","name":"timestamp","type":"uint256"}],"name":"UserRemoved","type":"event"},
+  {"anonymous":false,"inputs":[{"indexed":true,"internalType":"uint256","name":"assetId","type":"uint256"},{"indexed":false,"internalType":"string","name":"name","type":"string"},{"indexed":false,"internalType":"uint256","name":"hourlyFeeWei","type":"uint256"}],"name":"AssetRegistered","type":"event"},
+  {"anonymous":false,"inputs":[{"indexed":true,"internalType":"uint256","name":"bookingId","type":"uint256"},{"indexed":true,"internalType":"uint256","name":"assetId","type":"uint256"},{"indexed":true,"internalType":"address","name":"bookedBy","type":"address"},{"indexed":false,"internalType":"uint256","name":"startTime","type":"uint256"},{"indexed":false,"internalType":"uint256","name":"endTime","type":"uint256"},{"indexed":false,"internalType":"uint256","name":"amountPaid","type":"uint256"}],"name":"BookingCreated","type":"event"},
+  {"anonymous":false,"inputs":[{"indexed":true,"internalType":"uint256","name":"bookingId","type":"uint256"},{"indexed":false,"internalType":"uint256","name":"refund","type":"uint256"}],"name":"BookingCancelledByAdmin","type":"event"},
+  {"anonymous":false,"inputs":[{"indexed":true,"internalType":"uint256","name":"bookingId","type":"uint256"},{"indexed":false,"internalType":"uint256","name":"refund","type":"uint256"}],"name":"BookingCancelledByUser","type":"event"}
+];
+
+// Demo data (shown when no real contract connected)
+const DEMO_ASSETS = [
+  { id:1, name:"Seminar Hall A", description:"200-seat auditorium with AV setup, AC, and stage", category:"Hall", hourlyFeeWei:"10000000000000000", active:true },
+  { id:2, name:"Computer Lab 3", description:"40 workstations with internet, MATLAB, Simulink", category:"Lab", hourlyFeeWei:"5000000000000000", active:true },
+  { id:3, name:"Basketball Court", description:"Outdoor court with floodlights, suitable for tournaments", category:"Court", hourlyFeeWei:"3000000000000000", active:true },
+  { id:4, name:"Projector + Screen Kit", description:"4K projector, 120-inch screen, HDMI cables included", category:"Equipment", hourlyFeeWei:"2000000000000000", active:true },
+  { id:5, name:"Recording Studio", description:"Soundproofed studio with DAW, mics, and mixing board", category:"Studio", hourlyFeeWei:"8000000000000000", active:true },
+  { id:6, name:"Physics Lab", description:"Advanced instruments: oscilloscope, spectrometer, optics kit", category:"Lab", hourlyFeeWei:"6000000000000000", active:true },
+];
+
+const DEMO_WALLETS = [
+  { role:"Admin", color:"#6366f1", addr:"0xf17f52151EbEF6C7334FAD080c5704D77216b732", bal:"99.7 ETH" },
+  { role:"User A", color:"#10b981", addr:"0xC5fdf4076b8F3A5357c5E395ab970B5B54098Fef", bal:"98.2 ETH" },
+  { role:"User B", color:"#10b981", addr:"0x821aEa9a577a9b44299B9c15c88cf3087F3b5544", bal:"97.5 ETH" },
+  { role:"Unregistered", color:"#ef4444", addr:"0x0d1d4e623D10F9FBA5Db95830F7d3839406C6AF2", bal:"100 ETH" },
+];
+
+// ══════════════════════════════════════════════════════════════
+//  WALLET CONNECTION
+// ══════════════════════════════════════════════════════════════
+async function connectWallet() {
+  if (!window.ethereum) {
+    toast('MetaMask Required', 'Please install MetaMask to use this DApp.', 'error');
+    return;
+  }
+  try {
+    const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
+    await initWeb3(accounts[0]);
+  } catch (e) {
+    toast('Connection Failed', e.message, 'error');
+  }
+}
+
+async function initWeb3(account) {
+  web3 = new Web3(window.ethereum);
+  currentAccount = account;
+
+  window.ethereum.on('accountsChanged', (accs) => {
+    if (accs.length === 0) disconnectWallet();
+    else initWeb3(accs[0]);
+  });
+
+  // Update header
+  document.getElementById('wallet-dot').classList.remove('disconnected');
+  document.getElementById('wallet-label').textContent = shortAddr(account);
+  document.getElementById('no-wallet-warn').style.display = 'none';
+  document.getElementById('connect-btn').style.display = 'none';
+
+  // Init contract if address set
+  if (CONTRACT_ADDRESS) {
+    await setContractAddress(false);
+  } else {
+    document.getElementById('role-badge').textContent = 'Connected';
+    document.getElementById('role-badge').className = 'role-badge role-user';
+    toast('Wallet Connected', `${shortAddr(account)} — Paste contract address in Setup tab.`, 'info');
+  }
+
+  loadAssets();
+  renderDemoWallets();
+}
+
+async function checkRole() {
+  if (!contract || !currentAccount) return;
+  try {
+    const adminAddr = await contract.methods.admin().call();
+    isAdmin = adminAddr.toLowerCase() === currentAccount.toLowerCase();
+    isRegistered = await contract.methods.registeredUsers(currentAccount).call();
+
+    const badge = document.getElementById('role-badge');
+    if (isAdmin) {
+      badge.textContent = 'Admin';
+      badge.className = 'role-badge role-admin';
+    } else if (isRegistered) {
+      badge.textContent = 'Registered';
+      badge.className = 'role-badge role-user';
+    } else {
+      badge.textContent = 'Unregistered';
+      badge.className = 'role-badge role-none';
+    }
+  } catch(e) { console.log('Role check error', e); }
+}
+
+function disconnectWallet() {
+  currentAccount = null; web3 = null; contract = null;
+  isAdmin = false; isRegistered = false;
+  document.getElementById('wallet-dot').classList.add('disconnected');
+  document.getElementById('wallet-label').textContent = 'Not connected';
+  document.getElementById('role-badge').textContent = 'Guest';
+  document.getElementById('role-badge').className = 'role-badge role-none';
+  document.getElementById('connect-btn').style.display = '';
+}
+
+async function setContractAddress(showToast = true) {
+  CONTRACT_ADDRESS = document.getElementById('contract-addr-input').value.trim();
+
+  if (!web3) return;
+
+  if (!CONTRACT_ADDRESS) {
+    contract = null;
+    await loadAssets();
+    return;
+  }
+
+  if (!web3.utils.isAddress(CONTRACT_ADDRESS)) {
+    contract = null;
+    if (showToast) toast('Invalid Address', 'Enter a valid contract address (0x...).', 'error');
+    return;
+  }
+
+  try {
+    const code = await web3.eth.getCode(CONTRACT_ADDRESS);
+    if (!code || code === '0x' || code === '0x0') {
+      contract = null;
+      if (showToast) toast('Wrong Address', 'This looks like a wallet address. Paste the deployed contract address instead.', 'error');
+      return;
+    }
+
+    contract = new web3.eth.Contract(CONTRACT_ABI, CONTRACT_ADDRESS);
+    await checkRole();
+    await loadAssets();
+    if (showToast) toast('Contract Set', 'Contract address configured. You can now interact with the blockchain.', 'success');
+  } catch (e) {
+    contract = null;
+    if (showToast) toast('Contract Error', e.message || 'Failed to initialize contract.', 'error');
+  }
+}
+
+function setABI() {
+  try {
+    const raw = document.getElementById('abi-input').value.trim();
+    if (!raw) return;
+    CONTRACT_ABI = JSON.parse(raw);
+    if (web3 && CONTRACT_ADDRESS) {
+      contract = new web3.eth.Contract(CONTRACT_ABI, CONTRACT_ADDRESS);
+    }
+    toast('ABI Loaded', 'Contract ABI configured successfully.', 'success');
+  } catch(e) {
+    toast('ABI Error', 'Invalid JSON — check the ABI format.', 'error');
+  }
+}
+
+// ══════════════════════════════════════════════════════════════
+//  ASSET CATALOGUE
+// ══════════════════════════════════════════════════════════════
+async function loadAssets() {
+  const grid = document.getElementById('asset-grid');
+
+  if (!contract) {
+    // Show demo data
+    grid.innerHTML = '';
+    DEMO_ASSETS.forEach(a => grid.appendChild(makeAssetCard(a, true)));
+    populateBookSelect(DEMO_ASSETS);
+    return;
+  }
+
+  try {
+    const ids = await contract.methods.getAllAssetIds().call();
+    const assets = [];
+    for (const id of ids) {
+      const a = await contract.methods.getAsset(id).call();
+      if (a.active) assets.push(a);
+    }
+    grid.innerHTML = '';
+    if (assets.length === 0) {
+      grid.innerHTML = '<div style="color:var(--text3);padding:2rem;">No assets registered yet.</div>';
+      resetBookingSelection();
+      populateBookSelect([]);
+    } else {
+      assets.forEach(a => grid.appendChild(makeAssetCard(a, false)));
+      populateBookSelect(assets);
+    }
+  } catch(e) {
+    toast('Load Error', e.message, 'error');
+    // When connected to a real contract, avoid demo fallback because
+    // demo IDs can revert on-chain (asset not found/inactive).
+    grid.innerHTML = '<div style="color:var(--danger);padding:2rem;">Could not load on-chain assets. Check network, ABI, and contract address in Setup.</div>';
+    resetBookingSelection();
+    populateBookSelect([]);
+  }
+}
+
+function weiToEth(wei) {
+  if (typeof wei === 'bigint') wei = wei.toString();
+  return parseFloat(wei) / 1e18;
+}
+
+function makeAssetCard(a, isDemo) {
+  const div = document.createElement('div');
+  div.className = 'asset-card';
+  const fee = weiToEth(a.hourlyFeeWei);
+  div.innerHTML = `
+    <div class="asset-category">${a.category}${isDemo?' · Demo':''}</div>
+    <div class="asset-name">${a.name}</div>
+    <div class="asset-desc">${a.description}</div>
+    <div class="asset-fee">${fee.toFixed(4)} ETH / hr</div>
+    <div class="slots-bar">
+      <div class="slots-label">ID: ${a.id}</div>
+    </div>
+  `;
+  div.onclick = () => selectAssetForBooking(a);
+  return div;
+}
+
+// ══════════════════════════════════════════════════════════════
+//  BOOKING
+// ══════════════════════════════════════════════════════════════
+let selectedAsset = null;
+
+function resetBookingSelection() {
+  selectedAsset = null;
+  document.getElementById('book-asset-select').value = '';
+  document.getElementById('selected-asset-info').style.display = 'none';
+  document.getElementById('fee-calc-box').style.display = 'none';
+  document.getElementById('conflict-warn').style.display = 'none';
+  document.getElementById('asset-timeline').innerHTML = '<div style="color:var(--text3);font-size:13px;">Select an on-chain asset to view availability.</div>';
+}
+
+function populateBookSelect(assets) {
+  const sel = document.getElementById('book-asset-select');
+  sel.innerHTML = '<option value="">— choose an asset —</option>';
+  assets.forEach(a => {
+    const o = document.createElement('option');
+    o.value = a.id;
+    o.textContent = `${a.name} (${weiToEth(a.hourlyFeeWei).toFixed(4)} ETH/hr)`;
+    sel.appendChild(o);
+  });
+}
+
+function selectAssetForBooking(a) {
+  selectedAsset = a;
+  document.getElementById('book-asset-select').value = a.id;
+  document.getElementById('selected-asset-info').style.display = 'block';
+  document.getElementById('book-asset-name').textContent = a.name;
+  document.getElementById('book-asset-desc').textContent = a.description;
+  document.getElementById('book-asset-fee').textContent = `${weiToEth(a.hourlyFeeWei).toFixed(4)} ETH / hour`;
+  switchTab('book');
+  loadAssetTimeline(a.id);
+  calcFee();
+}
+
+async function onAssetSelect() {
+  const id = document.getElementById('book-asset-select').value;
+  if (!id) { selectedAsset = null; document.getElementById('selected-asset-info').style.display='none'; return; }
+
+  // Find asset in demo or from chain
+  let a = DEMO_ASSETS.find(x => x.id == id);
+  if (contract) {
+    try { a = await contract.methods.getAsset(id).call(); } catch(e){}
+  }
+  if (a) selectAssetForBooking(a);
+}
+
+async function loadAssetTimeline(assetId) {
+  const box = document.getElementById('asset-timeline');
+  box.innerHTML = '<div style="color:var(--text3);font-size:13px;">Loading…</div>';
+
+  if (!contract) {
+    box.innerHTML = '<div style="color:var(--text3);font-size:13px;">Connect contract to see live bookings.</div>';
+    return;
+  }
+
+  try {
+    const bids = await contract.methods.getAssetBookings(assetId).call();
+    if (bids.length === 0) {
+      box.innerHTML = '<div style="color:var(--success);font-size:13px;">✓ No bookings — fully available!</div>';
+      return;
+    }
+    let html = '';
+    for (const bid of bids) {
+      const b = await contract.methods.getBooking(bid).call();
+      if (b.status == 0) {
+        const start = new Date(Number(b.startTime)*1000);
+        const end   = new Date(Number(b.endTime)*1000);
+        html += `<div class="history-item">
+          <div class="history-dot" style="background:var(--danger)"></div>
+          <div>
+            <div style="font-size:13px;font-weight:500;">Booking #${b.id}</div>
+            <div style="font-size:12px;color:var(--text2);">${fmtDT(start)} → ${fmtDT(end)}</div>
+            <div style="font-size:11px;font-family:var(--mono);color:var(--text3);">${shortAddr(b.bookedBy)}</div>
+          </div>
+        </div>`;
+      }
+    }
+    box.innerHTML = html || '<div style="color:var(--success);font-size:13px;">✓ No active bookings.</div>';
+  } catch(e) {
+    box.innerHTML = `<div style="color:var(--danger);font-size:12px;">${e.message}</div>`;
+  }
+}
+
+function calcFee() {
+  const startVal = document.getElementById('book-start').value;
+  const endVal   = document.getElementById('book-end').value;
+  const calcBox  = document.getElementById('fee-calc-box');
+  const conflictWarn = document.getElementById('conflict-warn');
+  conflictWarn.style.display = 'none';
+
+  if (!startVal || !endVal || !selectedAsset) { calcBox.style.display='none'; return; }
+
+  const start = new Date(startVal).getTime() / 1000;
+  const end   = new Date(endVal).getTime() / 1000;
+
+  if (end <= start || (end - start) < 3600) { calcBox.style.display='none'; return; }
+
+  const hrs = (end - start) / 3600;
+  if (hrs % 1 !== 0) { calcBox.style.display='none'; return; }
+
+  const fee = weiToEth(selectedAsset.hourlyFeeWei);
+  const total = fee * hrs;
+
+  document.getElementById('calc-hrs').textContent  = `${hrs} hour${hrs>1?'s':''}`;
+  document.getElementById('calc-rate').textContent = `${fee.toFixed(4)} ETH/hr`;
+  document.getElementById('calc-total').textContent= `${total.toFixed(4)} ETH`;
+  calcBox.style.display = 'block';
+}
+
+async function bookAsset() {
+  if (!contract) { toast('Not Connected', 'Connect MetaMask and set contract address.', 'error'); return; }
+  if (!isRegistered && !isAdmin) { toast('Access Denied', 'Your wallet is not registered. Ask admin to register it.', 'error'); return; }
+  if (!selectedAsset) { toast('No Asset', 'Please select an asset.', 'error'); return; }
+
+  // Guard against stale/demo selections when connected to live contract.
+  try {
+    const onChainAsset = await contract.methods.getAsset(selectedAsset.id).call();
+    if (!onChainAsset.active) {
+      toast('No On-Chain Asset', 'This asset is not active on-chain. Register an asset from Admin tab first.', 'error');
+      await loadAssets();
+      return;
+    }
+    selectedAsset = onChainAsset;
+  } catch (e) {
+    toast('Asset Lookup Failed', 'Could not verify the selected asset on-chain.', 'error');
+    return;
+  }
+
+  const startVal = document.getElementById('book-start').value;
+  const endVal   = document.getElementById('book-end').value;
+  if (!startVal || !endVal) { toast('Missing Times', 'Please set start and end times.', 'error'); return; }
+
+  const startTs = Math.floor(new Date(startVal).getTime() / 1000);
+  const endTs   = Math.floor(new Date(endVal).getTime() / 1000);
+
+  if (startTs < Math.floor(Date.now()/1000)) { toast('Invalid', 'Start time must be in the future.', 'error'); return; }
+  if ((endTs - startTs) < 3600 || (endTs - startTs) % 3600 !== 0) { toast('Invalid', 'Duration must be whole hours, minimum 1 hour.', 'error'); return; }
+
+  // Check availability
+  try {
+    const avail = await contract.methods.isSlotAvailable(selectedAsset.id, startTs, endTs).call();
+    if (!avail) {
+      document.getElementById('conflict-warn').style.display = 'flex';
+      toast('Slot Conflict', 'This time slot overlaps an existing booking.', 'error');
+      return;
+    }
+  } catch(e) {}
+
+  const hrs = (endTs - startTs) / 3600;
+  const feeWei = BigInt(selectedAsset.hourlyFeeWei) * BigInt(hrs);
+
+  const btn = document.getElementById('book-btn');
+  btn.disabled = true; btn.textContent = '⏳ Processing…';
+
+  try {
+    const tx = await contract.methods.bookAsset(selectedAsset.id, startTs, endTs).send({
+      from: currentAccount,
+      value: feeWei.toString()
+    });
+    toast('Booking Confirmed!', `Booking ID: ${tx.events?.BookingCreated?.returnValues?.bookingId || '?'} — ETH transferred.`, 'success');
+    loadAssetTimeline(selectedAsset.id);
+  } catch(e) {
+    const msg = e.data?.message || e.message || 'Transaction failed';
+    toast('Booking Failed', msg.includes('slot conflict') ? 'Slot conflict — another booking exists.' : msg, 'error');
+  } finally {
+    btn.disabled = false; btn.textContent = '🔗 Book & Pay via MetaMask';
+  }
+}
+
+// ══════════════════════════════════════════════════════════════
+//  MY BOOKINGS
+// ══════════════════════════════════════════════════════════════
+async function loadMyBookings() {
+  const tbody = document.getElementById('my-bookings-body');
+  if (!contract || !currentAccount) {
+    tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;color:var(--text3);padding:2rem;">Connect wallet to view your bookings.</td></tr>';
+    return;
+  }
+  tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;color:var(--text3);">Loading…</td></tr>';
+  try {
+    const bids = await contract.methods.getUserBookings(currentAccount).call();
+    if (bids.length === 0) {
+      tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;color:var(--text3);padding:2rem;">No bookings yet.</td></tr>';
+      return;
+    }
+    let rows = '';
+    for (const bid of bids) {
+      const b = await contract.methods.getBooking(bid).call();
+      const asset = await contract.methods.getAsset(b.assetId).call();
+      const statusMap = ['Active', 'Cancelled (Admin)', 'Cancelled (User)'];
+      const statusClass = ['badge-active', 'badge-admin', 'badge-user'];
+      const paid = weiToEth(b.amountPaid);
+      const refund = b.refundAmount > 0 ? weiToEth(b.refundAmount).toFixed(4)+' ETH' : '—';
+      const now = Math.floor(Date.now()/1000);
+      const canCancel = b.status == 0 && now < Number(b.startTime);
+      rows += `<tr>
+        <td><code>${b.id}</code></td>
+        <td>${asset.name}</td>
+        <td style="font-size:12px;">${fmtDT(new Date(Number(b.startTime)*1000))}</td>
+        <td style="font-size:12px;">${fmtDT(new Date(Number(b.endTime)*1000))}</td>
+        <td style="font-family:var(--mono);">${paid.toFixed(4)}</td>
+        <td><span class="badge ${statusClass[b.status]}">${statusMap[b.status]}</span></td>
+        <td style="font-family:var(--mono);color:var(--success);">${refund}</td>
+        <td>${canCancel ? `<button class="btn btn-danger btn-sm" onclick="userCancelBooking(${b.id})">Cancel</button>` : '—'}</td>
+      </tr>`;
+    }
+    tbody.innerHTML = rows;
+  } catch(e) {
+    tbody.innerHTML = `<tr><td colspan="8" style="color:var(--danger);padding:1rem;">${e.message}</td></tr>`;
+  }
+}
+
+async function userCancelBooking(bookingId) {
+  if (!contract) return;
+  if (!confirm(`Cancel booking #${bookingId}? Refund policy applies (100% if >24h before slot, 50% otherwise).`)) return;
+  try {
+    await contract.methods.userCancelBooking(bookingId).send({ from: currentAccount });
+    toast('Cancelled', `Booking #${bookingId} cancelled. Refund sent to your wallet.`, 'success');
+    loadMyBookings();
+  } catch(e) {
+    toast('Cancel Failed', e.data?.message || e.message, 'error');
+  }
+}
+
+// ══════════════════════════════════════════════════════════════
+//  ADMIN
+// ══════════════════════════════════════════════════════════════
+async function adminRegisterAsset() {
+  if (!contract) { toast('Not Connected', 'Connect MetaMask and contract.', 'error'); return; }
+  const name  = document.getElementById('a-name').value.trim();
+  const desc  = document.getElementById('a-desc').value.trim();
+  const cat   = document.getElementById('a-category').value;
+  const feeEth= parseFloat(document.getElementById('a-fee').value);
+  if (!name || isNaN(feeEth) || feeEth <= 0) { toast('Invalid', 'Name and fee are required.', 'error'); return; }
+  const feeWei = BigInt(Math.round(feeEth * 1e18));
+  try {
+    const tx = await contract.methods.registerAsset(name, desc, cat, feeWei.toString()).send({ from: currentAccount });
+    toast('Asset Registered', `"${name}" added to the contract.`, 'success');
+    loadAssets();
+  } catch(e) {
+    toast('Error', e.data?.message || e.message, 'error');
+  }
+}
+
+async function adminRegisterUser() {
+  if (!contract) { toast('Not Connected', '', 'error'); return; }
+  const addr = document.getElementById('u-addr').value.trim();
+  if (!addr.startsWith('0x') || addr.length !== 42) { toast('Invalid Address', 'Enter a valid Ethereum address.', 'error'); return; }
+  try {
+    await contract.methods.registerUser(addr).send({ from: currentAccount });
+    toast('User Registered', `${shortAddr(addr)} can now book assets.`, 'success');
+    document.getElementById('u-addr').value = '';
+    loadRegisteredUsers();
+  } catch(e) {
+    toast('Error', e.data?.message || e.message, 'error');
+  }
+}
+
+async function adminRemoveUser() {
+  if (!contract) return;
+  const addr = document.getElementById('u-remove').value.trim();
+  if (!confirm(`Remove ${shortAddr(addr)} from registered users?`)) return;
+  try {
+    await contract.methods.removeUser(addr).send({ from: currentAccount });
+    toast('User Removed', `${shortAddr(addr)} can no longer book assets.`, 'success');
+    document.getElementById('u-remove').value = '';
+    loadRegisteredUsers();
+  } catch(e) {
+    toast('Error', e.data?.message || e.message, 'error');
+  }
+}
+
+async function loadRegisteredUsers() {
+  if (!contract) return;
+  try {
+    const users = await contract.methods.getRegisteredUsers().call();
+    const div = document.getElementById('registered-users-list');
+    if (users.length === 0) { div.innerHTML = '<em>No registered users</em>'; return; }
+    div.innerHTML = users.map(u => `<div>${shortAddr(u)} <span style="color:var(--success)">✓</span></div>`).join('');
+  } catch(e) {
+    toast('Error', e.message, 'error');
+  }
+}
+
+async function loadAllBookingsAdmin() {
+  if (!contract) return;
+  const tbody = document.getElementById('admin-bookings-body');
+  tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;color:var(--text3);">Loading…</td></tr>';
+  try {
+    const bids = await contract.methods.getAllBookingIds().call();
+    if (bids.length === 0) {
+      tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;color:var(--text3);padding:2rem;">No bookings on-chain.</td></tr>';
+      return;
+    }
+    let rows = '';
+    for (const bid of bids) {
+      const b = await contract.methods.getBooking(bid).call();
+      const asset = await contract.methods.getAsset(b.assetId).call();
+      const statusMap = ['Active', 'Cancelled (Admin)', 'Cancelled (User)'];
+      const statusClass = ['badge-active','badge-admin','badge-user'];
+      rows += `<tr>
+        <td><code>${b.id}</code></td>
+        <td>${asset.name}</td>
+        <td style="font-family:var(--mono);font-size:11px;">${shortAddr(b.bookedBy)}</td>
+        <td style="font-size:12px;">${fmtDT(new Date(Number(b.startTime)*1000))}</td>
+        <td style="font-size:12px;">${fmtDT(new Date(Number(b.endTime)*1000))}</td>
+        <td style="font-family:var(--mono);">${weiToEth(b.amountPaid).toFixed(4)}</td>
+        <td><span class="badge ${statusClass[b.status]}">${statusMap[b.status]}</span></td>
+        <td>${b.status==0?`<button class="btn btn-danger btn-sm" onclick="adminCancelBookingId(${b.id})">Cancel</button>`:'—'}</td>
+      </tr>`;
+    }
+    tbody.innerHTML = rows;
+  } catch(e) {
+    tbody.innerHTML = `<tr><td colspan="8" style="color:var(--danger);">${e.message}</td></tr>`;
+  }
+}
+
+async function adminCancelBooking() {
+  const id = parseInt(document.getElementById('admin-cancel-id').value);
+  if (isNaN(id)) { toast('Invalid', 'Enter a booking ID.', 'error'); return; }
+  await adminCancelBookingId(id);
+}
+
+async function adminCancelBookingId(id) {
+  if (!contract) return;
+  if (!confirm(`Cancel booking #${id} and issue 100% refund?`)) return;
+  try {
+    await contract.methods.adminCancelBooking(id).send({ from: currentAccount });
+    toast('Cancelled', `Booking #${id} cancelled. Full refund sent.`, 'success');
+    loadAllBookingsAdmin();
+  } catch(e) {
+    toast('Error', e.data?.message || e.message, 'error');
+  }
+}
+
+async function loadContractBalance() {
+  if (!contract) return;
+  try {
+    const bal = await contract.methods.contractBalance().call();
+    document.getElementById('contract-balance').textContent = weiToEth(bal).toFixed(6) + ' ETH (penalty pool)';
+  } catch(e) { toast('Error', e.message, 'error'); }
+}
+
+async function adminWithdraw() {
+  if (!contract) return;
+  if (!confirm('Withdraw all penalty funds to admin wallet?')) return;
+  try {
+    await contract.methods.withdrawPenalties().send({ from: currentAccount });
+    toast('Withdrawn', 'Penalty ETH sent to admin wallet.', 'success');
+    loadContractBalance();
+  } catch(e) {
+    toast('Error', e.data?.message || e.message, 'error');
+  }
+}
+
+// ══════════════════════════════════════════════════════════════
+//  HISTORY
+// ══════════════════════════════════════════════════════════════
+async function loadAllHistory() {
+  const div = document.getElementById('history-list');
+  if (!contract) {
+    div.innerHTML = `<div style="color:var(--text3);font-size:13px;text-align:center;padding:2rem;">Connect contract to load on-chain history.</div>`;
+    return;
+  }
+  div.innerHTML = '<div style="color:var(--text3);font-size:13px;">Loading…</div>';
+  try {
+    const bids = await contract.methods.getAllBookingIds().call();
+    if (bids.length === 0) {
+      div.innerHTML = '<div style="color:var(--text3);font-size:13px;text-align:center;padding:2rem;">No history yet.</div>';
+      return;
+    }
+    let html = '';
+    for (const bid of [...bids].reverse()) {
+      const b = await contract.methods.getBooking(bid).call();
+      const asset = await contract.methods.getAsset(b.assetId).call();
+      const statusColor = ['var(--success)','var(--danger)','var(--warning)'][b.status];
+      const statusLabel = ['Active','Admin Cancelled','User Cancelled'][b.status];
+      html += `<div class="history-item">
+        <div class="history-dot" style="background:${statusColor}"></div>
+        <div style="flex:1;">
+          <div style="display:flex;justify-content:space-between;align-items:center;">
+            <span style="font-size:13px;font-weight:500;">Booking #${b.id} — ${asset.name}</span>
+            <span class="badge ${['badge-active','badge-admin','badge-user'][b.status]}">${statusLabel}</span>
+          </div>
+          <div style="font-size:12px;color:var(--text2);margin-top:2px;">
+            ${fmtDT(new Date(Number(b.startTime)*1000))} → ${fmtDT(new Date(Number(b.endTime)*1000))}
+          </div>
+          <div style="font-size:11px;font-family:var(--mono);color:var(--text3);margin-top:2px;">
+            By: ${b.bookedBy} · Paid: ${weiToEth(b.amountPaid).toFixed(4)} ETH
+            ${b.refundAmount>0?' · Refund: '+weiToEth(b.refundAmount).toFixed(4)+' ETH':''}
+          </div>
+        </div>
+      </div>`;
+    }
+    div.innerHTML = html;
+  } catch(e) {
+    div.innerHTML = `<div style="color:var(--danger);">${e.message}</div>`;
+  }
+}
+
+// ══════════════════════════════════════════════════════════════
+//  DEMO WALLETS
+// ══════════════════════════════════════════════════════════════
+function renderDemoWallets() {
+  const div = document.getElementById('demo-wallets');
+  div.innerHTML = DEMO_WALLETS.map(w => `
+    <div class="demo-card">
+      <div class="demo-card-role" style="color:${w.color}">${w.role}</div>
+      <div class="demo-card-addr">${w.addr}</div>
+      <div class="demo-card-bal">${w.bal}</div>
+    </div>
+  `).join('');
+}
+
+// ══════════════════════════════════════════════════════════════
+//  HELPERS
+// ══════════════════════════════════════════════════════════════
+function shortAddr(a) {
+  if (!a) return '—';
+  return a.slice(0,6)+'…'+a.slice(-4);
+}
+
+function fmtDT(d) {
+  return d.toLocaleString('en-IN', { day:'2-digit', month:'short', year:'numeric', hour:'2-digit', minute:'2-digit' });
+}
+
+function toast(title, msg, type='info') {
+  const icons = { success:'✓', error:'✕', info:'ℹ' };
+  const c = document.getElementById('toast-container');
+  const t = document.createElement('div');
+  t.className = `toast ${type}`;
+  t.innerHTML = `<div class="toast-icon">${icons[type]}</div><div class="toast-body"><div class="toast-title">${title}</div><div class="toast-msg">${msg}</div></div>`;
+  c.appendChild(t);
+  setTimeout(() => t.remove(), 4000);
+}
+
+function switchTab(id) {
+  document.querySelectorAll('.tab').forEach((t,i) => {
+    const ids = ['catalogue','book','mybookings','admin','history','setup'];
+    t.classList.toggle('active', ids[i] === id);
+  });
+  document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+  document.getElementById('tab-'+id).classList.add('active');
+
+  if (id === 'mybookings') loadMyBookings();
+  if (id === 'admin') {
+    if (!isAdmin) document.getElementById('admin-gate').style.display='flex';
+    else document.getElementById('admin-gate').style.display='none';
+  }
+}
+
+function closeModal(id) { document.getElementById(id).classList.remove('open'); }
+
+// ══════════════════════════════════════════════════════════════
+//  INIT
+// ══════════════════════════════════════════════════════════════
+window.addEventListener('load', () => {
+  // Set minimum datetime to now
+  const now = new Date();
+  now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
+  const minStr = now.toISOString().slice(0,16);
+  document.getElementById('book-start').min = minStr;
+  document.getElementById('book-end').min   = minStr;
+
+  renderDemoWallets();
+  loadAssets();
+
+  // Load web3
+  if (typeof Web3 === 'undefined') {
+    const s = document.createElement('script');
+    s.src = 'https://cdnjs.cloudflare.com/ajax/libs/web3/4.13.0/web3.min.js';
+    s.onload = () => { if (window.ethereum) { /* auto-detect */ } };
+    document.head.appendChild(s);
+  }
+});
+</script>
+
+<!-- Load Web3.js -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/web3/4.13.0/web3.min.js"></script>
+
+</body>
+</html>

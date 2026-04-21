@@ -1,0 +1,43 @@
+services:
+  # ── Local blockchain (Ganache) ──────────────────────────────────────────────
+  ganache:
+    image: trufflesuite/ganache:latest
+    container_name: campuschain-ganache
+    ports:
+      - "8545:8545"
+    command: >
+      --server.host 0.0.0.0
+      --server.port 8545
+      --chain.chainId 1337
+      --chain.networkId 1337
+      --wallet.totalAccounts 10
+      --wallet.mnemonic "candy maple cake sugar pudding cream honey rich smooth crumble sweet treat"
+    healthcheck:
+      test: ["CMD", "node", "-e", "require('http').get('http://localhost:8545', () => process.exit(0)).on('error', () => process.exit(1))"]
+      interval: 3s
+      timeout: 5s
+      retries: 10
+
+  # ── Truffle: compile + deploy ───────────────────────────────────────────────
+  deployer:
+    build: .
+    container_name: campuschain-deployer
+    depends_on:
+      ganache:
+        condition: service_healthy
+    volumes:
+      - ./build:/app/build          # export ABI + address back to host
+    environment:
+      - GANACHE_HOST=ganache
+      - GANACHE_PORT=8545
+
+  # ── Static file server (serves the DApp HTML) ──────────────────────────────
+  dapp:
+    image: nginx:alpine
+    container_name: campuschain-dapp
+    ports:
+      - "3000:80"
+    volumes:
+      - ./campus-booking-dapp.html:/usr/share/nginx/html/index.html:ro
+    depends_on:
+      - ganache
